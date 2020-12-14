@@ -1,9 +1,10 @@
 library(dplyr)
-data <- read.csv("/Users/sorenthode/Desktop/P5/owid-covid-data.csv")
-data.Obesity <- read.csv("/Users/sorenthode/Desktop/P5/number-of-deaths-by-risk-factor.csv")
+#Please add your own path to the files.
+data <- read.csv(".../owid-covid-data.csv")
+data.Obesity <- read.csv(".../number-of-deaths-by-risk-factor.csv")
 data.ObesityFix <- select(data.Obesity,-c(1,2,3))
-data.Asthma <- read.csv("/Users/sorenthode/Desktop/P5/asthma-prevalence.csv")
-data.Population17 <- read.csv("/Users/sorenthode/Desktop/P5/Data_Extract_FromWorld-Development-Indicators.csv")
+data.Asthma <- read.csv(".../asthma-prevalence.csv")
+data.Population17 <- read.csv(".../Data_Extract_FromWorld-Development-Indicators.csv")
 data.generator <- function(){
   data.USA <- cbind(data[53839,],data.Asthma[6104,],data.ObesityFix[6104,]/as.numeric(as.character(data.Population17[207,"X2017"])))
   data.DNK <- cbind(data[14392,],data.Asthma[1596,],data.ObesityFix[1596,]/as.numeric(as.character(data.Population17[54,"X2017"])))
