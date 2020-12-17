@@ -124,7 +124,7 @@ data.generator <- function(){
 
 
 #Backwards selection algorithm
-#First a help function
+#First a help function to find the model with the intercept.
 model_function_backward <- function(x,y){
   k <- ncol(x)
   if(k==1){
@@ -160,7 +160,7 @@ model_function_backward <- function(x,y){
   }
   return(model)
 }
-#Another help function
+#Another help function, this time with no constant
 model_function_backward_no_constant <- function(x,y){
   k <- ncol(x)
   if(k==1){
@@ -196,7 +196,7 @@ model_function_backward_no_constant <- function(x,y){
   }
   return(model)
 }
-#Another help function
+#Another help function, this time with log of total deaths per mil and constant
 model_function_log <- function(x,y,k){
   if(k==1){
     model <- lm(log(y[,"total_deaths_per_million"])~x[,1])
@@ -231,7 +231,7 @@ model_function_log <- function(x,y,k){
   }
   return(model)
 }
-#Another help function
+#Another help function, this time with log of total deaths per mil and no constant
 model_function_log_no_constant <- function(x,y,k){
   if(k==1){
     model <- lm(log(y[,"total_deaths_per_million"])~0+x[,1])
@@ -267,8 +267,7 @@ model_function_log_no_constant <- function(x,y,k){
   return(model)
 }
 
-#Is log?
-#Just to figure out which help function we need to find the model. So this is another help function :))
+#As there is 4 different model help functions, we create a last help function, to figure out which one to use.
 model_function_log_or_no <- function(sig_par,all_countries,k,log_cond,constant){
   if(log_cond & !constant){
     model <- model_function_log(sig_par,all_countries,k)
@@ -286,7 +285,7 @@ model_function_log_or_no <- function(sig_par,all_countries,k,log_cond,constant){
 }
 
 #Main function to find model for backwards
-#Alot of inputs. The first is the parameters we want to look at. The second is matrix with all the countries and parameters
+#Three inputs. The first is the parameters we want to look at. The second is matrix with all the countries and parameters
 #And the last input is if we want to take log of the total deaths per million in the model.
 significant_parameters_function_backwards <- function(x,y,log_cond){
   all_countries <- y
@@ -299,12 +298,12 @@ significant_parameters_function_backwards <- function(x,y,log_cond){
     for(j in 1:ncol(sig_par)){
       if(coefficients(summary(model))[j+1,"Pr(>|t|)"]>worst_sig){
         worst_sig <- coefficients(summary(model))[j+1,"Pr(>|t|)"]
-        loc_of_sig_par <- j
+        loc_sig_par <- j
         cond <- T
       }
     }
     if(cond){
-      sig_par <- sig_par[,-loc_of_sig_par]
+      sig_par <- sig_par[,-loc_sig_par]
     }
   }
   if(coefficients(summary(model))["(Intercept)","Pr(>|t|)"]>0.05){
@@ -316,12 +315,12 @@ significant_parameters_function_backwards <- function(x,y,log_cond){
         model <- model_function_log_or_no(sig_par,all_countries,length(sig_par),log_cond,T)
         if(coefficients(summary(model))[j,"Pr(>|t|)"]>worst_sig){
           worst_sig <- coefficients(summary(model))[j,"Pr(>|t|)"]
-          loc_of_sig_par <- j
+          loc_sig_par <- j
           cond <- T
         }
       }
       if(cond){
-        sig_par <- sig_par[,-loc_of_sig_par]
+        sig_par <- sig_par[,-loc_sig_par]
       }
     }
     model <- coefficients(summary(model_function_log_or_no(sig_par,all_countries,length(sig_par),log_cond,T)))
@@ -341,7 +340,9 @@ significant_parameters_function_backwards <- function(x,y,log_cond){
   return(model)
 }
 
-#Model 1.1 (Just for the parameters...)
+#Model 1.1 (Just for the parameters)
+all_countries <- data_generator()
+all_countries_parameters_of_interest <- select(all_countries,c(37,38,39,40,41,42,43,44,45,46,48,49,50,54,80))
 model <- lm(all_countries[,"total_deaths_per_million"] ~ all_countries[,37]+all_countries[,38]+all_countries[,39]+all_countries[,40]
             +all_countries[,41]+all_countries[,42]+all_countries[,43]+all_countries[,44]+all_countries[,45]+all_countries[,46]+
               all_countries[,48]+all_countries[,49]+all_countries[,50]+all_countries[,54]+all_countries[,80])
@@ -350,7 +351,7 @@ summary(model)$r.squared
 summary(model)$adj.r.squared
 
 #Model 1.2
-all_countries <- data.generator()
+all_countries <- data_generator()
 all_countries_parameters_of_interest <- select(all_countries,c(37,38,39,40,41,42,43,44,45,46,48,49,50,54,80))
 significant_parameters_function_backwards(all_countries_parameters_of_interest,all_countries,F)
 model <- lm(all_countries[,"total_deaths_per_million"] ~ 0+all_countries[,"gdp_per_capita"] + all_countries[,"cardiovasc_death_rate"] + all_countries[,"human_development_index"])
@@ -363,7 +364,7 @@ plot(model)
 
 
 #Model 1.3 We see the trumpet shape and do the code again with log equal to T
-all_countries <- data.generator()
+all_countries <- data_generator()
 all_countries_parameters_of_interest <- select(all_countries,c(37,38,39,40,41,42,43,44,45,46,48,49,50,54,80))
 significant_parameters_function_backwards(all_countries_parameters_of_interest,all_countries,T)
 model <- lm(log(all_countries[,"total_deaths_per_million"]) ~ 0+all_countries[,"gdp_per_capita"] + all_countries[,"hospital_beds_per_thousand"] + all_countries[,"human_development_index"]+all_countries[,"Deaths...High.body.mass.index...Sex..Both...Age..All.Ages..Number."] )
@@ -372,13 +373,9 @@ summary(model)$r.squared
 summary(model)$adj.r.squared
 plot(model)
 
+#Plot of Cooks D
 plot(model, pch=18, col="red", which=c(4))
 
-all_countries[23,3]
-all_countries[37,3]
-all_countries[72,3]
-cooks.distance(model)
-plot(model, pch=18, col="red", which=c(4))
 
 #Finding out how many data points fits within the prediction interval for model 1.3
 pred_int <- predict(model,interval = "prediction")
@@ -386,7 +383,7 @@ in_pred_int <- sum(log(all_countries[,"total_deaths_per_million"]) >= pred_int[,
                      log(all_countries[,"total_deaths_per_million"]) <= pred_int[,3]);in_pred_int
 in_pred_int/nrow(pred_int)
 
-#Down here trying to make that sweet graph.
+#Making a graph with confidence interval and prediction interval
 all_countries_ef <- all_countries
 
 pred_int_ef <- predict(model,interval = "prediction")
@@ -408,32 +405,35 @@ lines(1:nrow(all_countries_ef), conf_int_ef[,2],
 lines(1:nrow(all_countries_ef), conf_int_ef[,3],
       col = "darkorange2", lwd = 2)
 
-#A function to check for NA's. It returns the countries index and the parameter, which is NA.
-which.have.na <- function(parameters.to.investigate){
-  all_countries <- data.generator()
-  parameters.in.model <- select(all_countries,parameters.to.investigate)
-  no.country <- rep(0,nrow(all_countries_parameters_of_interest))
-  no.parameter <- rep(0,ncol(all_countries_parameters_of_interest))
+#A function to check for NA's. It returns the countries index and the parameters.
+which_have_na <- function(par_to_investigate){
+  all_countries <- data_generator()
+  par_in_model <- select(all_countries,par_to_investigate)
+  no_country <- rep(0,nrow(all_countries_parameters_of_interest))
+  no_parameter <- rep(0,ncol(all_countries_parameters_of_interest))
   k <- 1
-  for(i in 1:nrow(parameters.in.model)){
-    for(j in 1:ncol(parameters.in.model)){
-      if(is.na(parameters.in.model[i,j])){
-        no.country[k] <- i
-        no.parameter[k] <- j
+  for(i in 1:nrow(par_in_model)){
+    for(j in 1:ncol(par_in_model)){
+      if(is.na(par_in_model[i,j])){
+        no_country[k] <- i
+        no_parameter[k] <- j
         k <- k+1
       }
     }
   }
-  no.country <- no.country[no.country!=0]
-  no.parameter <- no.parameter[no.parameter!=0]
-  print(no.country)
-  print(no.parameter)
+  no_country <- no_country[no_country!=0]
+  no_parameter <- no_parameter[no_parameter!=0]
+  for(i in 1:length(no_parameter)){
+    no_parameter[i] <- par_to_investigate[no_parameter[i]]
+  }
+  print(no_country)
+  print(no_parameter)
 }
-which.have.na(c(41,48,50,80))
+which_have_na(c(37,38,39,40,41,43,44,45,46,48,49,50,54,80))
 
 
 #Model 1.4
-all_countries <- data.generator()[-c(42,47,60,76,84,90),]
+all_countries <- data_generator()[-c(42,47,60,76,84,90),]
 all_countries_parameters_of_interest <- select(all_countries,c(37,38,39,40,41,42,43,44,45,46,48,49,50,54,80))
 significant_parameters_function_backwards(all_countries_parameters_of_interest,all_countries,T)
 
@@ -441,7 +441,7 @@ model <- lm(log(all_countries[,"total_deaths_per_million"]) ~ 0+all_countries[,"
 print(coefficients(summary(model)))
 summary(model)$r.squared
 summary(model)$adj.r.squared
-#plot(model)
+plot(model)
 
 #Just to see that fewer more points are within the prediction interval, we find the percentage again and make the graph
 pred_int <- predict(model,interval = "prediction"); pred_int
@@ -472,9 +472,8 @@ lines(1:nrow(all_countries_ef), conf_int_ef[,3],
       col = "darkorange2", lwd = 2)
 
 
-
 #------------------------------------------------------
-#A help function for forward selection
+#A help function for forward selection. Creates a model.
 model_function_forward_no_log <- function(x,k,i,sig_par_total){
   if(k==0){
     model <- lm(all_countries[,"total_deaths_per_million"]~x[,i])
@@ -523,6 +522,7 @@ model_function_forward_no_log <- function(x,k,i,sig_par_total){
   }
   return(model)
 }
+#Another help function, this time with log o
 model_function_forward_log <- function(x,k,i,sig_par_total){
   if(k==0){
     model <- lm(log(all_countries[,"total_deaths_per_million"])~x[,i])
@@ -588,25 +588,25 @@ significant_parameters_function_forward <- function(x,log_con){
   loc_sig_par_ite <- 0
   loc_sig_par_ite_conf <- numeric(ncol(x))
   while(length(loc_sig_par_ite)!=0 || k==0){
-    for(i in c(1:ncol(x))[! c(1:ncol(x)) %in% loc_sig_par_ite_conf]){
+    for(i in c(1:ncol(x))[!c(1:ncol(x))%in%loc_sig_par_ite_conf]){
       if(coefficients(summary(model_function_forward(x,k,i,loc_sig_par_ite_conf[which(loc_sig_par_ite_conf!=0)],log_con)))[k+2,"Pr(>|t|)"]<0.05){
         sig_par_int[i] <- 1
       } else {
         sig_par_int[i] <- 0
       }
     }
-    loc_of_sig_par_total <- which(sig_par_int==1)
-    loc_sig_par_ite <- loc_of_sig_par_total[! loc_of_sig_par_total %in% loc_sig_par_ite_conf]
+    loc_sig_par_total <- which(sig_par_int==1)
+    loc_sig_par_ite <- loc_sig_par_total[!loc_sig_par_total%in%loc_sig_par_ite_conf]
     par_min_pval_cond <- 1
-    loc_of_par_min_pval <- 0
+    loc_par_min_pval <- 0
     if(length(loc_sig_par_ite)>1){
       for(j in 1:length(loc_sig_par_ite)){
         if(coefficients(summary(model_function_forward(x,k,loc_sig_par_ite[j],loc_sig_par_ite_conf,log_con)))[k+2,"Pr(>|t|)"]<par_min_pval_cond){
           par_min_pval_cond <- coefficients(summary(model_function_forward(x,k,loc_sig_par_ite[j],loc_sig_par_ite_conf,log_con)))[k+2,"Pr(>|t|)"]
-          loc_of_par_min_pval <- j
+          loc_par_min_pval <- j
         }
       }
-      loc_sig_par_ite_conf[k+1] <- loc_sig_par_ite[loc_of_par_min_pval]
+      loc_sig_par_ite_conf[k+1] <- loc_sig_par_ite[loc_par_min_pval]
     } else if(length(loc_sig_par_ite)==1){
       loc_sig_par_ite_conf[k+1] <- loc_sig_par_ite
     }
@@ -623,7 +623,7 @@ significant_parameters_function_forward <- function(x,log_con){
 }
 
 #Model 2.1
-all_countries <- data.generator()
+all_countries <- data_generator()
 all_countries_parameters_of_interest <- select(all_countries,c(37,38,39,40,41,43,44,45,46,48,49,50,54,80))
 significant_parameters_function_forward(all_countries_parameters_of_interest,F)
 model <- lm(all_countries[,"total_deaths_per_million"] ~ all_countries[,"life_expectancy"] + all_countries[,"cardiovasc_death_rate"] +all_countries[,"gdp_per_capita"] + all_countries[,"human_development_index"])
@@ -633,14 +633,8 @@ summary(model)$adj.r.squared
 plot(model)
 plot(model, pch=18, col="red", which=c(4))
 
-all_countries_parameters_of_interest[96,]
-all_countries_parameters_of_interest[95,]
-
-data_for_step <- cbind(all_countries[,"total_deaths_per_million"],all_countries_parameters_of_interest)
-colnames(data_for_step)[1] <- "total_deaths_per_million"
-
 #Model 2.2
-all_countries <- data.generator()
+all_countries <- data_generator()
 all_countries_parameters_of_interest <- select(all_countries,c(37,38,39,40,41,43,44,45,46,48,49,50,54,80))
 significant_parameters_function_forward(all_countries_parameters_of_interest,T)
 model <- lm(log(all_countries[,"total_deaths_per_million"]) ~ all_countries[,"life_expectancy"]+
@@ -652,7 +646,7 @@ model <- lm(log(all_countries[,"total_deaths_per_million"]) ~ all_countries[,"li
 print(coefficients(summary(model)))
 summary(model)$r.squared
 summary(model)$adj.r.squared
-#plot(model)
+plot(model)
 plot(model, pch=18, col="red", which=c(4))
 
 pred_int <- predict(model,interval = "prediction")
@@ -682,11 +676,11 @@ lines(1:nrow(all_countries_ef), conf_int_ef[,3],
       col = "darkorange2", lwd = 2)
 
 #Using the same function as earlier to check for NA's
-which.have.na(c(41,49,37,80,48,54,43))
+which_have_na(c(41,49,37,80,48,54,43))
 
 
 #Model 2.3
-all_countries <- data.generator()[-c(90,84,76,60,47),]
+all_countries <- data_generator()[-c(90,84,76,60,47),]
 all_countries_parameters_of_interest <- select(all_countries,c(37,38,39,40,41,43,44,45,46,48,49,50,54,80))
 significant_parameters_function_forward(all_countries_parameters_of_interest,T)
 model <- lm(log(all_countries[,"total_deaths_per_million"]) ~ all_countries[,"human_development_index"]+
@@ -707,8 +701,8 @@ in_pred_int <- sum(log(all_countries[,"total_deaths_per_million"]) >= pred_int[,
 in_pred_int/nrow(pred_int)
 
 #-----------------------------------------------------
-#Compare models
-all_countries <- data.generator()[-c(90,84,76,60,47,42),]
+#Compareing the final models
+all_countries <- data_generator()[-c(90,84,76,60,47,42),]
 model_forward <- lm(log(all_countries[,"total_deaths_per_million"]) ~ all_countries[,"human_development_index"]+
               all_countries[,"population_density"] +
               all_countries[,"hospital_beds_per_thousand"]+ 
