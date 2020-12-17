@@ -1,5 +1,6 @@
 library(dplyr)
 library(RCurl)
+colnames(data.Obesity)
 
 #Loading the datasets from github
 data <- read.csv(text = getURL("https://raw.githubusercontent.com/MBakster/Statistical-Modelling-and-Analysis/main/owid-covid-data.csv"))
@@ -361,7 +362,6 @@ summary(model)$r.squared
 summary(model)$adj.r.squared
 plot(model)
 
-
 #Model 1.3 We see the trumpet shape and do the code again with log equal to T
 all_countries <- data_generator()
 all_countries_parameters_of_interest <- select(all_countries,c(37,38,39,40,41,42,43,44,45,46,48,49,50,54,80))
@@ -372,8 +372,15 @@ summary(model)$r.squared
 summary(model)$adj.r.squared
 plot(model)
 
-#Plot of Cooks D
+#Two graphs for Cooks D
 plot(model, pch=18, col="red", which=c(4))
+abline(h=4/(nrow(all_countries)-4), col="blue")
+
+plot(hatvalues(model),rstudent(model),xlab = "Leverage",ylab="Studentized residuals")
+abline(h=0, col="black",lty=2)
+
+#Checking witch cooks d is over cut off value 
+ifelse(cooks.distance(model)>4/(nrow(all_countries)-3), yes="OUTLIER", no="")
 
 #Finding out how many data points fits within the prediction interval for model 1.3
 pred_int <- predict(model,interval = "prediction")
@@ -643,8 +650,18 @@ print(coefficients(summary(model)))
 summary(model)$r.squared
 summary(model)$adj.r.squared
 plot(model)
-plot(model, pch=18, col="red", which=c(4))
 
+#Two graphs for Cooks D
+plot(model, pch=18, col="red", which=c(4))
+abline(h=4/(nrow(all_countries)-6), col="blue")
+
+plot(hatvalues(model),rstudent(model),xlab = "Leverage",ylab="Studentized residuals")
+abline(h=0, col="black",lty=2)
+
+#Checking witch cooks d is over cut off value 
+ifelse(cooks.distance(model)>4/(nrow(all_countries)-3), yes="OUTLIER", no="")
+
+#Creating prediction and confidence graph.
 pred_int <- predict(model,interval = "prediction")
 in_pred_int <- sum(log(all_countries[,"total_deaths_per_million"]) >= pred_int[,2] &
                      log(all_countries[,"total_deaths_per_million"]) <= pred_int[,3]);in_pred_int
