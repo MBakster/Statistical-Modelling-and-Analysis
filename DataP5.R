@@ -7,7 +7,7 @@ data.Obesity <- read.csv(text = getURL("https://raw.githubusercontent.com/MBakst
 data.ObesityFix <- select(data.Obesity,-c(1,2,3))
 data.Asthma <- read.csv(text = getURL("https://raw.githubusercontent.com/MBakster/Statistical-Modelling-and-Analysis/main/asthma-prevalence.csv"))
 data.Population17 <- read.csv(text = getURL("https://raw.githubusercontent.com/MBakster/Statistical-Modelling-and-Analysis/main/Data_Extract_FromWorld-Development-Indicators.csv"))
-data.generator <- function(){
+data_generator <- function(){
   data.USA <- cbind(data[53839,],data.Asthma[6104,],data.ObesityFix[6104,]/as.numeric(as.character(data.Population17[207,"X2017"])))
   data.DNK <- cbind(data[14392,],data.Asthma[1596,],data.ObesityFix[1596,]/as.numeric(as.character(data.Population17[54,"X2017"])))
   data.SWE <- cbind(data[49261,],data.Asthma[5572,],data.ObesityFix[5572,]/as.numeric(as.character(data.Population17[188,"X2017"])))
@@ -123,7 +123,6 @@ data.generator <- function(){
                          data.SGP,data.ZAF,data.LKA,data.TJK,data.UZB,data.VEN,data.YEM,data.ZWE)
   return(all_countries)
 }
-
 
 #Backwards selection algorithm
 #First a help function to find the model with the intercept.
@@ -346,7 +345,7 @@ significant_parameters_function_backwards <- function(x,y,log_cond){
 all_countries <- data_generator()
 all_countries_parameters_of_interest <- select(all_countries,c(37,38,39,40,41,42,43,44,45,46,48,49,50,54,80))
 model <- lm(all_countries[,"total_deaths_per_million"] ~ all_countries[,37]+all_countries[,38]+all_countries[,39]+all_countries[,40]
-            +all_countries[,41]+all_countries[,42]+all_countries[,43]+all_countries[,44]+all_countries[,45]+all_countries[,46]+
+            +all_countries[,41]+all_countries[,43]+all_countries[,44]+all_countries[,45]+all_countries[,46]+
               all_countries[,48]+all_countries[,49]+all_countries[,50]+all_countries[,54]+all_countries[,80])
 print(coefficients(summary(model)))
 summary(model)$r.squared
@@ -361,8 +360,6 @@ print(coefficients(summary(model)))
 summary(model)$r.squared
 summary(model)$adj.r.squared
 plot(model)
-
-
 
 
 #Model 1.3 We see the trumpet shape and do the code again with log equal to T
