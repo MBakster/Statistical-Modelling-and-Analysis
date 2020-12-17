@@ -1,10 +1,12 @@
 library(dplyr)
-#Please add your own path to the files.
-data <- read.csv(".../owid-covid-data.csv")
-data.Obesity <- read.csv(".../number-of-deaths-by-risk-factor.csv")
+library(RCurl)
+
+#Loading the datasets from github
+data <- read.csv(text = getURL("https://raw.githubusercontent.com/MBakster/Statistical-Modelling-and-Analysis/main/owid-covid-data.csv"))
+data.Obesity <- read.csv(text = getURL("https://raw.githubusercontent.com/MBakster/Statistical-Modelling-and-Analysis/main/number-of-deaths-by-risk-factor.csv"))
 data.ObesityFix <- select(data.Obesity,-c(1,2,3))
-data.Asthma <- read.csv(".../asthma-prevalence.csv")
-data.Population17 <- read.csv(".../Data_Extract_FromWorld-Development-Indicators.csv")
+data.Asthma <- read.csv(text = getURL("https://raw.githubusercontent.com/MBakster/Statistical-Modelling-and-Analysis/main/asthma-prevalence.csv"))
+data.Population17 <- read.csv(text = getURL("https://raw.githubusercontent.com/MBakster/Statistical-Modelling-and-Analysis/main/Data_Extract_FromWorld-Development-Indicators.csv"))
 data.generator <- function(){
   data.USA <- cbind(data[53839,],data.Asthma[6104,],data.ObesityFix[6104,]/as.numeric(as.character(data.Population17[207,"X2017"])))
   data.DNK <- cbind(data[14392,],data.Asthma[1596,],data.ObesityFix[1596,]/as.numeric(as.character(data.Population17[54,"X2017"])))
