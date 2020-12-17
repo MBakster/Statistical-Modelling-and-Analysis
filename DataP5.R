@@ -375,7 +375,6 @@ plot(model)
 #Plot of Cooks D
 plot(model, pch=18, col="red", which=c(4))
 
-
 #Finding out how many data points fits within the prediction interval for model 1.3
 pred_int <- predict(model,interval = "prediction")
 in_pred_int <- sum(log(all_countries[,"total_deaths_per_million"]) >= pred_int[,2] &
@@ -430,7 +429,6 @@ which_have_na <- function(par_to_investigate){
 }
 which_have_na(c(37,38,39,40,41,43,44,45,46,48,49,50,54,80))
 
-
 #Model 1.4
 all_countries <- data_generator()[-c(42,47,60,76,84,90),]
 all_countries_parameters_of_interest <- select(all_countries,c(37,38,39,40,41,42,43,44,45,46,48,49,50,54,80))
@@ -469,7 +467,6 @@ lines(1:nrow(all_countries_ef), conf_int_ef[,2],
       col = "darkorange2", lwd = 2)
 lines(1:nrow(all_countries_ef), conf_int_ef[,3],
       col = "darkorange2", lwd = 2)
-
 
 #------------------------------------------------------
 #A help function for forward selection. Creates a model.
@@ -677,7 +674,6 @@ lines(1:nrow(all_countries_ef), conf_int_ef[,3],
 #Using the same function as earlier to check for NA's
 which_have_na(c(41,49,37,80,48,54,43))
 
-
 #Model 2.3
 all_countries <- data_generator()[-c(90,84,76,60,47),]
 all_countries_parameters_of_interest <- select(all_countries,c(37,38,39,40,41,43,44,45,46,48,49,50,54,80))
@@ -718,4 +714,3 @@ model_backward <- lm(log(all_countries[,"total_deaths_per_million"]) ~ 0+all_cou
 AIC(model_forward, model_backward)
 AICc(model_forward, model_backward)
 BIC(model_forward, model_backward)
-
